@@ -38,7 +38,6 @@ const server = net.createServer((socket) => {
         } else if(path.startsWith("/user-agent")) {
             socket.write(createResponse("200 OK", {
                 "Content-Type": "text/plain"
-1
             }, headers["User-Agent"]))
         } else {
             socket.write("HTTP/1.1 404 Not Found\r\n\r\n")
