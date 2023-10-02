@@ -16,6 +16,7 @@ const server = net.createServer((socket) => {
         socket.end();
         server.close();
     });
+    socket.on('data', handleRequest(socket));
 });
 
 server.listen(4221, "localhost");
