@@ -1,3 +1,4 @@
+
 const net = require("net");
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 console.log("Logs from your program will appear here!");
@@ -19,19 +20,20 @@ const server = net.createServer((socket) => {
         const [method, path, protocol] = lines[0].split(" ")
         let section = 0;
         const headersRaw = lines.filter((v, i) => i >= 2 && v != "").map(l => l.split(": "))
-        let headers = {}
+        const headers = {}
         for(const header of headersRaw) {
             headers[header[0]] = header[1]
-1
         }
         console.log("method", method)
         console.log("path", path)
         console.log("protocol", protocol)
+1
         console.log("headers", headers)
         if(path == "/") {
             socket.write("HTTP/1.1 200 OK\r\n\r\n")
         } else if(path.startsWith("/echo/")) {
             const garbage = path.replace(/^\/echo\//g, "")
+            //socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${new Blob([garbage]).size}\r\n\r\n${garbage}`)
             socket.write(createResponse("200 OK", {
                 "Content-Type": "text/plain"
             }, garbage))
@@ -42,7 +44,10 @@ const server = net.createServer((socket) => {
         } else {
             socket.write("HTTP/1.1 404 Not Found\r\n\r\n")
         }
+        
         socket.end();
     })
+1
 });
+1
 server.listen(4221, "localhost");
