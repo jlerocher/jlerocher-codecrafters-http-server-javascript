@@ -1,53 +1,42 @@
-
 const net = require("net");
-// You can use print statements as follows for debugging, they'll be visible when running tests.
-console.log("Logs from your program will appear here!");
-function createResponse(status, headers, body) {
-    let headerStr = ""
-    for(const header in headers) {
-        headerStr += header + ": " + headers[header] + "\r\n"
-    }
-    return `HTTP/1.1 ${status}\r\n${headerStr}Content-Length: ${new Blob([body]).size}\r\n\r\n${body}`;
-}
-// Uncomment this to pass the first stage
+const fs = require("fs");
+1
+const p = require("path")
 const server = net.createServer((socket) => {
-    socket.on("close", () => {
-        socket.end();
-        server.close();
-    });
-    socket.on("data", data => {
-        const lines = data.toString().split("\r\n")
-        const [method, path, protocol] = lines[0].split(" ")
-        let section = 0;
-        const headersRaw = lines.filter((v, i) => i >= 2 && v != "").map(l => l.split(": "))
-        const headers = {}
-        for(const header of headersRaw) {
-            headers[header[0]] = header[1]
-        }
-        console.log("method", method)
-        console.log("path", path)
-        console.log("protocol", protocol)
-1
-        console.log("headers", headers)
-        if(path == "/") {
-            socket.write("HTTP/1.1 200 OK\r\n\r\n")
-        } else if(path.startsWith("/echo/")) {
-            const garbage = path.replace(/^\/echo\//g, "")
-            //socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${new Blob([garbage]).size}\r\n\r\n${garbage}`)
-            socket.write(createResponse("200 OK", {
-                "Content-Type": "text/plain"
-            }, garbage))
-        } else if(path.startsWith("/user-agent")) {
-            socket.write(createResponse("200 OK", {
-                "Content-Type": "text/plain"
-            }, headers["User-Agent"]))
+  socket.on('data', (chunk) => {
+    const data = Buffer.from(chunk).toString('utf8');
+    const lines = data.split("\r\n");
+    const [method, path, protocol] = lines[0].split(" ");
+    if (path === '/') {
+      socket.write("HTTP/1.1 200 OK\r\n\r\n");
+    } else if (path.startsWith('/echo')) {
+      const randomString = path.slice(6);
+      socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length:${randomString.length}\r\n\r\n${randomString}\r\n`);
+    } else if (path.startsWith('/user-agent')) {
+        const headers = lines.slice(1);
+        const userAgentHeader = headers.find((h) => h.startsWith('User-Agent'));
+        const userAgentValue = userAgentHeader.slice(12);
+        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length:${userAgentValue.length}\r\n\r\n${userAgentValue}\r\n`);
+    } else if (path.startsWith('/files')) {
+        const filename = path.slice(7);
+        const dirname = process.argv.at(-1);
+        const fullpath = p.join(dirname, filename)
+        if (fs.existsSync(fullpath)) {
+          const file = fs.readFileSync(fullpath);
+          const fileSize = fs.statSync(fullpath).size;
+          socket.write(`HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileSize}\r\n\r\n${file}`);
         } else {
-            socket.write("HTTP/1.1 404 Not Found\r\n\r\n")
+          socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         }
-        
-        socket.end();
-    })
-1
-});
-1
-server.listen(4221, "localhost");
+  1
+      } else {
+        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      }
+      socket.end();
+    });
+    socket.on("close", () => {
+      socket.end();
+      server.close();
+    });
+  });
+  server.listen(4221, "localhost");
