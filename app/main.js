@@ -1,6 +1,5 @@
 const net = require("net");
 const fs = require("fs");
-1
 const p = require("path")
 const server = net.createServer((socket) => {
   socket.on('data', (chunk) => {
@@ -13,14 +12,15 @@ const server = net.createServer((socket) => {
       const randomString = path.slice(6);
       socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length:${randomString.length}\r\n\r\n${randomString}\r\n`);
     } else if (path.startsWith('/user-agent')) {
-        const headers = lines.slice(1);
-        const userAgentHeader = headers.find((h) => h.startsWith('User-Agent'));
-        const userAgentValue = userAgentHeader.slice(12);
-        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length:${userAgentValue.length}\r\n\r\n${userAgentValue}\r\n`);
+      const headers = lines.slice(1);
+      const userAgentHeader = headers.find((h) => h.startsWith('User-Agent'));
+      const userAgentValue = userAgentHeader.slice(12);
+      socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length:${userAgentValue.length}\r\n\r\n${userAgentValue}\r\n`);
     } else if (path.startsWith('/files')) {
         const filename = path.slice(7);
         const dirname = process.argv.at(-1);
-        const fullpath = p.join(dirname, filename)
+        const fullpath = p.join(dirname, filename);
+      if (method === 'GET') {
         if (fs.existsSync(fullpath)) {
           const file = fs.readFileSync(fullpath);
           const fileSize = fs.statSync(fullpath).size;
@@ -28,15 +28,22 @@ const server = net.createServer((socket) => {
         } else {
           socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         }
-  1
       } else {
-        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+        const content = lines.at(-1)
+        console.log('content', content);
+        console.log('fullpath', fullpath);
+        fs.writeFileSync(fullpath, content);
+1
+        socket.write("HTTP/1.1 201 Created\r\n\r\n");
       }
-      socket.end();
-    });
-    socket.on("close", () => {
-      socket.end();
-      server.close();
-    });
+    } else {
+      socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+    }
+    socket.end();
   });
-  server.listen(4221, "localhost");
+  socket.on("close", () => {
+    socket.end();
+    server.close();
+  });
+});
+server.listen(4221, "localhost");
