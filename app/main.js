@@ -18,11 +18,12 @@ const handleRequest = (socket) => {
             socket.write(
                 `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length:${randomString.length}\r\n\r\n${randomString}\r\n`,
 1
-        );} else {
+            );
+        } else {
             socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         }
         socket.end();
-    }
+    };
 };
 
 function badRequest(socket) {
